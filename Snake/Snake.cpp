@@ -1,123 +1,80 @@
-#include <iostream>
+#include "Snake.h"
 #include <conio.h>
-//#include <windows.h>
 
-using namespace std;
-bool gameOver;
-const int width = 20;
-const int height = 20;
-int x, y, fruitX, fruitY, score;
-enum Direction { STOP = 0, LEFT, RIGHT, UP, DOWN };
-Direction dir;
+const char SNAKE_TAIL = '@';        // символ для отрисовки сегментов тела змеи, кроме головы
 
-void Setup() {
-	gameOver = false;
-	dir = STOP;
-	x = width / 2 - 1;
-	y = height / 2 - 1;
-	fruitX = rand() % width;
-	fruitY = rand() % height;
-	score = 0;
+Snake::Snake() {
+	head_mark = '<';
 }
 
-void Draw() {
-	system("cls"); //system ("clear");
-	for (int i = 0; i < width + 1; i++) {
-		cout << "#";
-	}
-	cout << endl;
-
-	for (int i = 0; i < height; i++) {
-		for (int j = 0; j < width; j++) {
-			if (j == 0 || j == width - 1) {
-				cout << "#";
-			}
-
-			if (i == y && j == x) {
-				cout << "0";
-			}
-			else if (i == fruitY && j == fruitX) {
-				cout << "F";
-			}
-			else {
-				cout << " ";
-			}
-		}
-		cout << endl;
-	}
-
-	for (int i = 0; i < width + 1; i++) {
-		cout << "#";
-	}
-	cout << endl;
-	cout << "Score " << score << endl;
+void Snake::reset(Coord start_pos) {
+	worm.clear();
+	worm.reserve(1000);         // зарезервировть память
+	worm.push_back(start_pos);  // добавить координаты головы
+	worm.push_back(start_pos);  // добавить координаты хвоста
+	worm[0].x++;                // координата x хвоста - на 1 правее
 }
 
-void Input() {
-	if (_kbhit()) {
-		switch (_getch())
-		{
-		case 'a': {
-			dir = LEFT;
-			break;
-		}
-		case 'd': {
-			dir = RIGHT;
-			break;
-		}
-		case 'w': {
-			dir = UP;
-			break;
-		}
-		case 's': {
-			dir = DOWN;
-			break;
-		}
-		}
-	}
+void Snake::draw(Screen& scr) {
+	unsigned int wsize = worm.size() - 1;
+	for (unsigned int i = 0; i < wsize; i++)
+		scr.print_console(worm[i].x, worm[i].y, SNAKE_TAIL);
+	scr.print_console(worm[wsize].x, worm[wsize].y, head_mark);
+	drawn = worm.size();
 }
 
-void Logic() {
-	switch (dir)
-	{
-	case LEFT: {
-		x--;
-		break;
-	}
-	case RIGHT: {
-		x++;
-		break;
-	}
-	case UP: {
-		y--;
-		break;
-	}
-	case DOWN: {
-		y++;
-		break;
-	}
-	}
+void Snake::move(const Coord& delta, Screen& scr) {
+	// При перемещении змеи перерисовывается только положение головы (и первого сегмента)
+	// и положение хвоста. Остальные сегменты змеи не перерисовываются.
 
-	if (x > width || x < 0 || y > height || y < 0) {
-		gameOver = true;
-	}
+	// Перерисовка хвоста.
+	// Длина змеи увеличивается, когда змея растёт (метод grow()),
+	// но змея на экране не изменяется. Поэтому, если отрисованная длина змеи
+	// совпадает с реальной длиной, то на экране затирается последний сегмент змеи (хвост).
+	// В противном случае, хвост остаётся на месте, голова сдвигается на единицу,
+	// а отрисованная длина увеличивается.
+	if (drawn == worm.size())
+		scr.print_console(worm[0].x, worm[0].y, ' ');
+	else
+		drawn++;
 
-	if (x == fruitX && y == fruitY) {
-		score++;
-		fruitX = rand() % width;
-		fruitY = rand() % height;
-	}
+	// сдвиг координат в векторе без отрисовки
+	for (unsigned int i = 1; i < worm.size(); i++)
+		worm[i - 1] = worm[i];
+
+	worm[worm.size() - 1] += delta;       // координата головы изменяется на приращение
+
+	// выбор символа для отрисовки головы в зависимости от направления движения
+	if (delta.x < 0)
+		head_mark = '<';
+	else if (delta.x > 0)
+		head_mark = '>';
+	else if (delta.y < 0)
+		head_mark = 'A';
+	else // (delta.y > 0)
+		head_mark = 'V';
+
+	// Перерисовка головы и первого сегмента змеи.
+	scr.print_console(worm[worm.size() - 1].x, worm[worm.size() - 1].y, head_mark);
+	scr.print_console(worm[worm.size() - 2].x, worm[worm.size() - 2].y, SNAKE_TAIL);
 }
 
-int main()
-{
-	Setup();
-	while (!gameOver) {
-		Draw();
-		Input();
-		Logic();
-		//Sleep(200);
-	}
+void Snake::grow(const Coord& pos, int growbits) {
+	for (int i = 0; i < growbits; ++i)
+		worm.insert(worm.begin(), pos);
+}
 
-	return 0;
+bool Snake::into(const Coord& pos) {
+	for (unsigned int i = 0; i < worm.size(); i++)
+		if (worm[i].x == pos.x && worm[i].y == pos.y)
+			return true;
+	return false;
+}
+
+Coord Snake::head() {
+	return worm[worm.size() - 1];
+}
+
+int Snake::size() {
+	return static_cast<int>(worm.size());
 }
