@@ -53,8 +53,9 @@
 
 // очистка буфера клавиатуры
 void clearkeys() {
-	while (_kbhit())
+	while (_kbhit()) {
 		_getch();
+	}
 }
 
 // Конструктор
@@ -63,21 +64,21 @@ void clearkeys() {
 // _height  - высота игрового поля (y)
 // _latency - задержка между изменением позиции в миллисекундах
 
-Game::Game(Screen& _scr, int _width = 0, int _height = 0, int _latency) :
-	scr(_scr), latency(_latency) {
+Game::Game(Screen& _scr, int _width, int _height, int _latency) :
+	screen(_scr), latency(_latency) {
 
-	if (_width == 0 && _height == 0) {
-		PCONSOLE_SCREEN_BUFFER_INFO pcsbi;
-		GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), pcsbi);
+	if (_width != 0 && _height != 0) {
+		CONSOLE_SCREEN_BUFFER_INFO pcsbi;
+		GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &pcsbi);
 
-		width = pcsbi->dwSize.X;
-		height = pcsbi->dwSize.Y;
+		width = pcsbi.dwMaximumWindowSize.X;
+		height = pcsbi.dwMaximumWindowSize.Y;
 	}
 
 	srand(static_cast<unsigned int>(time(NULL)));
 
 	duration_game = 0;
-	rating = 0.0;
+	//rating = 0.0;
 
 	// инициализация таблицы команд управления игрой
 	cmd_table[0] = CmdPair(27, CMD_EXIT);   // escape key
@@ -105,11 +106,11 @@ Game::Command Game::get_command() {
 
 // Координата еды вычисляется случайным образом.
 // Ограничение: координата не должна попадать в тело змеи.
-Coord Game::make_food() {
-	Coord food;
+COORD Game::make_food() {
+	COORD food;
 	do {
-		food.x = rand() % (width - 2) + 1;
-		food.y = rand() % (height - 2) + 1;
+		food.X = rand() % (width - 2) + 1;
+		food.Y = rand() % (height - 2) + 1;
 	} while (snake.into(food));
 
 	return food;
@@ -121,32 +122,32 @@ const char BORDER = '#';    // символ для рисования рамки игрового поля
 
 void Game::draw_field() {
 
-	scr.cls();
+	screen.cls();
 
 	for (int i = 0; i < height; i++) {
 		if (i == 0 || i == height - 1) {
 			for (int j = 0; j < width; j++)
-				scr.print_console(j, i, BORDER);
+				screen.print_console_symbol(j, i, BORDER);
 		}
 		else {
-			scr.print_console(0, i, BORDER);
-			scr.print_console(width - 1, i, BORDER);
+			screen.print_console_symbol(0, i, BORDER);
+			screen.print_console_symbol(width - 1, i, BORDER);
 		}
 	}
-	scr.print_console(0, height);
-	_cprintf("Length: ****  Rating: ****.**** (****.****)  Time: ****.**");
+	//scr.print_console(0, height);
+	_cprintf_s("Length: ****  Rating: ****.**** (****.****)  Time: ****.**");
 }
 
 
 void Game::print_stat() {
-	scr.print_console(8, height);
-	_cprintf("%04u", snake.size());
-	scr.print_console(22, height);
-	_cprintf("%09.4f", rating);
-	scr.print_console(33, height);
-	_cprintf("%09.4f", rating_i);
-	scr.print_console(51, height);
-	_cprintf("%07.2f", duration_game);
+	//scr.print_console(8, height);
+	//_cprintf("%04u", snake.size());
+	//scr.print_console(22, height);
+	//_cprintf("%09.4f", rating);
+	//scr.print_console(33, height);
+	//_cprintf("%09.4f", rating_i);
+	//scr.print_console(, height);
+	_cprintf("%07.2f", 51, height, duration_game);
 }
 
 //void Game::top10_table() {
@@ -200,19 +201,21 @@ void Game::print_stat() {
 //	}
 //}
 
-void Game::wait_to_click(int y) {
-	scr.write_string(width / 2 - 15, y, "Press any key for continue...");
+void Game::wait_to_click(int position_y) {
+	screen.print_console_string(width / 2 - 15, position_y, "Press any key for continue...");
 	_getch();
 	clearkeys();
 }
 
 bool Game::once_more() {
-	scr.write_string(width / 2 - 12, height - 3, "O n c e    m o r e ?");
+	screen.print_console_string(width / 2 - 12, height - 3, "O n c e    m o r e ?");
 
 	int ch = _getch();
 	clearkeys();
-	if (ch == 'N' || ch == 'n' || ch == 27)
+
+	if (ch == 'N' || ch == 'n' || ch == 27) {
 		return false;
+	}
 	return true;
 }
 
@@ -222,15 +225,15 @@ const char* ver_number = "v 1.1";
 const char* copyright = "(c) Cranium, 2014.";
 
 void Game::logo() {
-	scr.write_string(width / 2 - 9, 10, "O l d s c h o o l");
-	scr.write_string(width / 2 - 7, 12, "S  N  A  K  E");
-	scr.write_string(width / 2 - 3, 16, ver_number);
-	scr.write_string(width / 2 - 9, height, copyright);
-	wait_to_click(22);
+	screen.print_console_string(width / 2 - 9, 10, "O l d s c h o o l");
+	screen.print_console_string(width / 2 - 7, 12, "S  N  A  K  E");
+	screen.print_console_string(width / 2 - 3, 16, ver_number);
+	screen.print_console_string(width / 2 - 9, height, copyright);
+	//wait_to_click(22);
 }
 
 void Game::goodbye() {
-	scr.cls();
+	screen.cls();
 	_cprintf("Oldschool Snake %s\n%s\n", ver_number, copyright);
 }
 
@@ -239,21 +242,22 @@ const char FOOD = '$';      // символ для вывода еды
 void Game::game_loop() {
 
 	duration_game = 0;
-	rating = rating_i = 0.0;
+	//rating = rating_i = 0.0;
 
 	draw_field();           // нарисовать игровое поле
 
-	snake.reset(Coord(width / 2, height / 2));     // установить змею: длина 2,
+	COORD debug{ width / 2, height / 2 };
+	snake.reset(debug);     // установить змею: длина 2,
 													// положение - в середине игрового поля,
 													// направление - влево
 	Command cmd = CMD_NOCOMMAND;
-	State stt = STATE_OK;
+	State state = STATE_OK;
 	// delta  содержит приращение координат (dx, dy) для каждого перемещения змеи по полю
-	SCoord delta(-1, 0);                // начальное движение - влево
-	SCoord food = make_food();          // вычислить координаты еды
-	scr.print_console(food.x, food.y, FOOD);      // вывести еду на экран
+	COORD delta{ -1, 0 };                // начальное движение - влево
+	COORD food = make_food();          // вычислить координаты еды
+	screen.print_console_symbol(food.X, food.Y, FOOD);      // вывести еду на экран
 
-	snake.draw(scr);                    // первичное рисование змеи
+	snake.draw(screen);                    // первичное рисование змеи
 
 	print_stat();                       // вывести начальную статистику игры
 
@@ -262,42 +266,46 @@ void Game::game_loop() {
 
 	do {
 
-		if (_kbhit())                   // если в буфере клавиатуры есть информация,
+		if (_kbhit()) {					// если в буфере клавиатуры есть информация,
 			cmd = get_command();        // то принять команду
+		}
 
 		// обработка команд
 		switch (cmd) {
 		case CMD_LEFT:
-			delta = SCoord(-1, 0);
+			delta = COORD{ -1, 0 };
 			break;
 		case CMD_RIGHT:
-			delta = SCoord(1, 0);
+			delta = COORD{ 1, 0 };
 			break;
 		case CMD_UP:
-			delta = SCoord(0, -1);
+			delta = COORD{ 0, -1 };
 			break;
 		case CMD_DOWN:
-			delta = SCoord(0, 1);
+			delta = COORD{ 0, 1 };
 			break;
 		case CMD_EXIT:
-			stt = STATE_EXIT;
+			state = STATE_EXIT;
 		default:
 			break;
 		};
 
-		SCoord hd = snake.head();       // координата головы змеи
-		hd += delta;                    // координата головы змеи после приращения (следующая позиция)
+		COORD snake_head_coordinate = snake.head();       // координата головы змеи
+		//snake_head_coordinate += delta;                    // координата головы змеи после приращения (следующая позиция)
+		snake_head_coordinate = delta;                    // координата головы змеи после приращения (следующая позиция)
+
 		// если голова змеи столкнулась с границей поля или со телом змеи, то змея умирает
-		if (hd.x == 0 || hd.x == width - 1 || hd.y == 0 || hd.y == height - 1 || snake.into(hd))
-			stt = STATE_DIED;
+		if (snake_head_coordinate.X == 0 || snake_head_coordinate.X == width - 1 || snake_head_coordinate.Y == 0 || snake_head_coordinate.Y == height - 1 || snake.into(snake_head_coordinate)) {
+			state = STATE_DIED;
+		}
 
-		if (stt == STATE_OK) {          // если змея ещё жива, то
-			snake.move(delta, scr);     // сдвинуть змею на delta
+		if (state == STATE_OK) {          // если змея ещё жива, то
+			snake.move(delta, screen);     // сдвинуть змею на delta
 
-			if (snake.head() == food) { // если координата головы змеи совпадает с координатой еды, то
+			if (snake.head().X == food.X && snake.head().Y == food.Y) { // если координата головы змеи совпадает с координатой еды, то
 				snake.grow(food, 3);    // увеличить длину змеи
 				food = make_food();     // вычислить координаты новой еды
-				scr.print_console(food.x, food.y, FOOD); // вывести еду на экран
+				screen.print_console_symbol(food.X, food.Y, FOOD); // вывести еду на экран
 
 				// Вычисление времени игры, частичного и общего рейтинга.
 				// Частичный рейтинг вычисляется как длина змеи, делённая на время в секундах,
@@ -306,9 +314,9 @@ void Game::game_loop() {
 				time2 = clock();
 				duration = time2 - time1;
 				duration_game += static_cast<double>(duration) / CLOCKS_PER_SEC;
-				rating_i = static_cast<double>(snake.size()) / duration * CLOCKS_PER_SEC;
-				rating += rating_i;     // общий рейтинг - сумма частичных рейтингов за игру
-				time1 = time2;
+				//rating_i = static_cast<double>(snake.size()) / duration * CLOCKS_PER_SEC;
+				//rating += rating_i;     // общий рейтинг - сумма частичных рейтингов за игру
+				//time1 = time2;
 
 				print_stat();           // вывод текущей статистики игры
 			}
@@ -316,9 +324,9 @@ void Game::game_loop() {
 			Sleep(latency);             // задержка перед следующим изменением позиции
 		}
 
-	} while (stt == STATE_OK);          // играем, пока змея жива
+	} while (state == STATE_OK);          // играем, пока змея жива
 
-	scr.write_string(width / 2 - 8, 10, " G a m e    o v e r ");
+	screen.print_console_string(width / 2 - 8, 10, " G a m e    o v e r ");
 	clearkeys();
 	_getch();
 	clearkeys();

@@ -177,8 +177,8 @@ int main()
 
 		game.wait_to_click(18);
 
-		_cputs("Type 'Y' when finished typing keys: ");
-		int ch = toupper(_getch());
+		//_cputs("Type 'Y' when finished typing keys: ");
+		//int ch = toupper(_getch());
 
 		do {
 			game.game_loop();
