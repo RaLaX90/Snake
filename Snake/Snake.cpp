@@ -48,8 +48,9 @@ void Snake::move(const COORD& delta, Screen& scr) {
 		worm[i - 1] = worm[i];
 	}
 
-	//worm[worm.size() - 1] += delta;       // координата головы изменяется на приращение
-	worm.push_back(delta);
+	worm[worm.size() - 1].X += delta.X;       // координата головы изменяется на приращение
+	worm[worm.size() - 1].Y += delta.Y;       // координата головы изменяется на приращение
+	//worm.push_back(delta);
 
 	// выбор символа для отрисовки головы в зависимости от направления движения
 	if (delta.X < 0) {

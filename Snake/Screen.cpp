@@ -7,11 +7,14 @@ using namespace std;
 
 Screen::Screen() {
 	hConsoleOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (hConsoleOutput == INVALID_HANDLE_VALUE)
+	if (hConsoleOutput == INVALID_HANDLE_VALUE) {
 		throw "Failed GetStdHandle(): INVALID_HANDLE_VALUE";    // "INVALID_HANDLE_VALUE"
+	}
 
-	if (!GetConsoleCursorInfo(hConsoleOutput, &oldCursorInfo))
+	if (!GetConsoleCursorInfo(hConsoleOutput, &oldCursorInfo)) {
 		throw "Failed GetConsoleCursorInfo()";
+	}
+
 	curCursorInfo.dwSize = oldCursorInfo.dwSize;
 	curCursorInfo.bVisible = oldCursorInfo.bVisible;
 
@@ -27,8 +30,9 @@ Screen::~Screen() {
 
 void Screen::cursor_show(bool visible) {
 	curCursorInfo.bVisible = visible;
-	if (!SetConsoleCursorInfo(hConsoleOutput, &curCursorInfo))
+	if (!SetConsoleCursorInfo(hConsoleOutput, &curCursorInfo)) {
 		throw "Failed SetConsoleCursorInfo()";
+	}
 }
 
 void Screen::text_attr(WORD attr) {

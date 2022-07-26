@@ -72,7 +72,7 @@ Game::Game(Screen& _scr, int _width, int _height, int _latency) :
 		GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &pcsbi);
 
 		width = pcsbi.dwMaximumWindowSize.X;
-		height = pcsbi.dwMaximumWindowSize.Y;
+		height = pcsbi.dwMaximumWindowSize.Y / 2 - 2;
 	}
 
 	srand(static_cast<unsigned int>(time(NULL)));
@@ -126,15 +126,16 @@ void Game::draw_field() {
 
 	for (int i = 0; i < height; i++) {
 		if (i == 0 || i == height - 1) {
-			for (int j = 0; j < width; j++)
+			for (int j = 0; j < width; j++) {
 				screen.print_console_symbol(j, i, BORDER);
+			}
 		}
 		else {
 			screen.print_console_symbol(0, i, BORDER);
 			screen.print_console_symbol(width - 1, i, BORDER);
 		}
 	}
-	//scr.print_console(0, height);
+	screen.print_console_symbol(0, height, BORDER);
 	_cprintf_s("Length: ****  Rating: ****.**** (****.****)  Time: ****.**");
 }
 
@@ -147,7 +148,7 @@ void Game::print_stat() {
 	//scr.print_console(33, height);
 	//_cprintf("%09.4f", rating_i);
 	//scr.print_console(, height);
-	_cprintf("%07.2f", 51, height, duration_game);
+	_cprintf_s("%07.2f", 51, height, duration_game);
 }
 
 //void Game::top10_table() {
@@ -292,7 +293,9 @@ void Game::game_loop() {
 
 		COORD snake_head_coordinate = snake.head();       // координата головы змеи
 		//snake_head_coordinate += delta;                    // координата головы змеи после приращения (следующая позиция)
-		snake_head_coordinate = delta;                    // координата головы змеи после приращения (следующая позиция)
+		snake_head_coordinate.X += delta.X;
+		snake_head_coordinate.Y += delta.Y;
+
 
 		// если голова змеи столкнулась с границей поля или со телом змеи, то змея умирает
 		if (snake_head_coordinate.X == 0 || snake_head_coordinate.X == width - 1 || snake_head_coordinate.Y == 0 || snake_head_coordinate.Y == height - 1 || snake.into(snake_head_coordinate)) {
