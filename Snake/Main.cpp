@@ -168,24 +168,27 @@ int main()
 	try
 	{
 		Screen screen;
-		screen.cursor_show(false);
-		screen.text_attr((WORD)0x0a);
-		screen.cls();
+		screen.SetCursorShow(false);
+		screen.SetTextAttribute((WORD)0x0a);
+		screen.ClearScreen();
 		Game game(screen, 80, 24, 120);
 
-		game.logo();
+		game.PrintLogo();
 
-		game.wait_to_click(18);
+		game.WaitForClick(1, 18);
 
-		//_cputs("Type 'Y' when finished typing keys: ");
-		//int ch = toupper(_getch());
+		screen.ClearScreen();
+		screen.PrintString(0, 0, "Chose game mode:");
+		screen.PrintString(0, 1, "1) Casual");
+		screen.PrintString(0, 2, "2) Classic");
+		char ch = toupper(_getch());
 
 		do {
-			game.game_loop();
+			game.StartGameLoop();
 
-		} while (game.once_more());
+		} while (game.IsOnceMore());
 
-		game.goodbye();
+		game.EndGame();
 
 		//Setup();
 		//while (!gameOver) {

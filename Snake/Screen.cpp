@@ -1,89 +1,51 @@
 #include "Screen.h"
-#include <conio.h>
-#include <string>
-#include <iostream>
-
-using namespace std;
 
 Screen::Screen() {
-	hConsoleOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (hConsoleOutput == INVALID_HANDLE_VALUE) {
-		throw "Failed GetStdHandle(): INVALID_HANDLE_VALUE";    // "INVALID_HANDLE_VALUE"
+	m_console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (m_console_handle == INVALID_HANDLE_VALUE) {
+		throw "Failed GetStdHandle(): INVALID_HANDLE_VALUE";
 	}
 
-	if (!GetConsoleCursorInfo(hConsoleOutput, &oldCursorInfo)) {
+	if (!GetConsoleCursorInfo(m_console_handle, &m_old_cursor_info)) {
 		throw "Failed GetConsoleCursorInfo()";
 	}
 
-	curCursorInfo.dwSize = oldCursorInfo.dwSize;
-	curCursorInfo.bVisible = oldCursorInfo.bVisible;
+	m_current_cursor_info.dwSize = m_old_cursor_info.dwSize;
+	m_current_cursor_info.bVisible = m_old_cursor_info.bVisible;
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	GetConsoleScreenBufferInfo(hConsoleOutput, &csbi);
-	oldTextAttr = csbi.wAttributes;
+	GetConsoleScreenBufferInfo(m_console_handle, &csbi);
+	m_old_text_attribute = csbi.wAttributes;
 }
 
 Screen::~Screen() {
-	SetConsoleCursorInfo(hConsoleOutput, &oldCursorInfo);
-	SetConsoleTextAttribute(hConsoleOutput, oldTextAttr);
+	SetConsoleCursorInfo(m_console_handle, &m_old_cursor_info);
+	SetConsoleTextAttribute(m_console_handle, m_old_text_attribute);
 }
 
-void Screen::cursor_show(bool visible) {
-	curCursorInfo.bVisible = visible;
-	if (!SetConsoleCursorInfo(hConsoleOutput, &curCursorInfo)) {
+void Screen::SetCursorShow(bool visible) {
+	m_current_cursor_info.bVisible = visible;
+	if (!SetConsoleCursorInfo(m_console_handle, &m_current_cursor_info)) {
 		throw "Failed SetConsoleCursorInfo()";
 	}
 }
 
-void Screen::text_attr(WORD attr) {
-	SetConsoleTextAttribute(hConsoleOutput, attr);
+void Screen::SetTextAttribute(WORD attr) {
+	SetConsoleTextAttribute(m_console_handle, attr);
 }
 
-void Screen::set_cursor(int position_x, int position_y)
+void Screen::SetCursorPosition(int position_x, int position_y)
 {
 	COORD pos = { position_x, position_y };
-	SetConsoleCursorPosition(hConsoleOutput, pos);
+	SetConsoleCursorPosition(m_console_handle, pos);
 }
 
-void Screen::print_console_symbol(int position_x, int position_y, char ch)
+void Screen::PrintString(int position_x, int position_y, string text)
 {
-	/*COORD point;
-	point.X = static_cast<SHORT>(x);
-	point.Y = static_cast<SHORT>(y);
-	if (!SetConsoleCursorPosition(hConsoleOutput, point))
-		throw "Failed SetConsoleCursorPosition()";
-	if (ch > 0)
-		_putch(ch);*/
-	set_cursor(position_x, position_y);/////////////////////////////////////////////////////////////////
-//_cprintf_s("%lu", position_x, position_y, ch);
-	cout << ch;
-}
-
-void Screen::print_console_string(int position_x, int position_y, string text)
-{
-	/*COORD point;
-	point.X = static_cast<SHORT>(x);
-	point.Y = static_cast<SHORT>(y);
-	if (!SetConsoleCursorPosition(hConsoleOutput, point))
-		throw "Failed SetConsoleCursorPosition()";
-	if (ch > 0)
-		_putch(ch);*/
-	set_cursor(position_x, position_y);/////////////////////////////////////////////////////////////////
-//_cprintf_s("%lu", position_x, position_y, text);
+	SetCursorPosition(position_x, position_y);
 	cout << text;
 }
 
-
-
-//void Screen::write_string(int x, int y, const char* str) {
-//    set_cursor(x, y);
-//    //write_symbol(x, y);
-//    //COORD pos = { x, y };
-//    //SetConsoleCursorPosition(hConsoleOutput, pos);
-//    //WriteConsole(hConsoleOutput, "Hello", 5, NULL, NULL);
-//    _cprintf_s("%s", str);
-//}
-
-void Screen::cls() {
+void Screen::ClearScreen() {
 	system("cls");
 }

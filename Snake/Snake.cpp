@@ -1,32 +1,35 @@
 #include "Snake.h"
-#include <conio.h>
 
-const char SNAKE_TAIL = '@';        // символ дл€ отрисовки сегментов тела змеи, кроме головы
+string SNAKE_TAIL = "@";        // символ дл€ отрисовки сегментов тела змеи, кроме головы
 
 Snake::Snake() {
-	head_mark = '<';
+	m_head_mark = '<';
 }
 
-void Snake::reset(COORD start_pos) {
-	worm.clear();
-	worm.reserve(1000);         // зарезервировть пам€ть
-	worm.push_back(start_pos);  // добавить координаты головы
-	worm.push_back(start_pos);  // добавить координаты хвоста
-	worm[0].X++;                // координата x хвоста - на 1 правее
+Snake::~Snake()
+{
 }
 
-void Snake::draw(Screen& scr) {
-	unsigned int wsize = worm.size() - 1;
+void Snake::Reset(COORD start_pos) {
+	m_worm.clear();
+	m_worm.reserve(1000);         // зарезервировть пам€ть
+	m_worm.push_back(start_pos);  // добавить координаты головы
+	m_worm.push_back(start_pos);  // добавить координаты хвоста
+	m_worm[0].X++;                // координата x хвоста - на 1 правее
+}
+
+void Snake::Draw(Screen& scr) {
+	unsigned int wsize = m_worm.size() - 1;
 
 	for (unsigned int i = 0; i < wsize; i++) {
-		scr.print_console_symbol(worm[i].X, worm[i].Y, SNAKE_TAIL);
+		scr.PrintString(m_worm[i].X, m_worm[i].Y, SNAKE_TAIL);
 	}
 
-	scr.print_console_symbol(worm[wsize].X, worm[wsize].Y, head_mark);
-	drawn = worm.size();
+	scr.PrintString(m_worm[wsize].X, m_worm[wsize].Y, m_head_mark);
+	m_drawn = m_worm.size();
 }
 
-void Snake::move(const COORD& delta, Screen& scr) {
+void Snake::Move(const COORD& delta, Screen& scr) {
 	// ѕри перемещении змеи перерисовываетс€ только положение головы (и первого сегмента)
 	// и положение хвоста. ќстальные сегменты змеи не перерисовываютс€.
 
@@ -36,50 +39,49 @@ void Snake::move(const COORD& delta, Screen& scr) {
 	// совпадает с реальной длиной, то на экране затираетс€ последний сегмент змеи (хвост).
 	// ¬ противном случае, хвост остаЄтс€ на месте, голова сдвигаетс€ на единицу,
 	// а отрисованна€ длина увеличиваетс€.
-	if (drawn == worm.size()) {
-		scr.print_console_symbol(worm[0].X, worm[0].Y, ' ');
+	if (m_drawn == m_worm.size()) {
+		scr.PrintString(m_worm[0].X, m_worm[0].Y, " ");
 	}
 	else {
-		drawn++;
+		m_drawn++;
 	}
 
 	// сдвиг координат в векторе без отрисовки
-	for (unsigned int i = 1; i < worm.size(); i++) {
-		worm[i - 1] = worm[i];
+	for (unsigned int i = 1; i < m_worm.size(); i++) {
+		m_worm[i - 1] = m_worm[i];
 	}
 
-	worm[worm.size() - 1].X += delta.X;       // координата головы измен€етс€ на приращение
-	worm[worm.size() - 1].Y += delta.Y;       // координата головы измен€етс€ на приращение
-	//worm.push_back(delta);
+	m_worm[m_worm.size() - 1].X += delta.X;       // координата головы измен€етс€ на приращение
+	m_worm[m_worm.size() - 1].Y += delta.Y;       // координата головы измен€етс€ на приращение
 
 	// выбор символа дл€ отрисовки головы в зависимости от направлени€ движени€
 	if (delta.X < 0) {
-		head_mark = '<';
+		m_head_mark = '<';
 	}
 	else if (delta.X > 0) {
-		head_mark = '>';
+		m_head_mark = '>';
 	}
 	else if (delta.Y < 0) {
-		head_mark = 'A';
+		m_head_mark = 'A';
 	}
-	else /*(delta.Y > 0)*/{
-		head_mark = 'V';
+	else /*(delta.Y > 0)*/ {
+		m_head_mark = 'V';
 	}
 
 	// ѕерерисовка головы и первого сегмента змеи.
-	scr.print_console_symbol(worm[worm.size() - 1].X, worm[worm.size() - 1].Y, head_mark);
-	scr.print_console_symbol(worm[worm.size() - 2].X, worm[worm.size() - 2].Y, SNAKE_TAIL);
+	scr.PrintString(m_worm[m_worm.size() - 1].X, m_worm[m_worm.size() - 1].Y, m_head_mark);
+	scr.PrintString(m_worm[m_worm.size() - 2].X, m_worm[m_worm.size() - 2].Y, SNAKE_TAIL);
 }
 
-void Snake::grow(const COORD& pos, int growbits) {
+void Snake::Grow(const COORD& pos, int growbits) {
 	for (int i = 0; i < growbits; ++i) {
-		worm.insert(worm.begin(), pos);
+		m_worm.insert(m_worm.begin(), pos);
 	}
 }
 
-bool Snake::into(const COORD& pos) {
-	for (unsigned int i = 0; i < worm.size(); i++) {
-		if (worm[i].X == pos.X && worm[i].Y == pos.Y) {
+bool Snake::IsInSnakeBody(const COORD& pos) {
+	for (unsigned int i = 0; i < m_worm.size(); i++) {
+		if (m_worm[i].X == pos.X && m_worm[i].Y == pos.Y) {
 			return true;
 		}
 	}
@@ -87,10 +89,10 @@ bool Snake::into(const COORD& pos) {
 	return false;
 }
 
-COORD Snake::head() {
-	return worm[worm.size() - 1];
+COORD Snake::GetSnakeHeadCoordinate() {
+	return m_worm[m_worm.size() - 1];
 }
 
-int Snake::size() {
-	return static_cast<int>(worm.size());
+int Snake::GetSnakeSize() {
+	return static_cast<int>(m_worm.size());
 }
