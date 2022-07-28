@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-//#include <conio.h>
 #include "Screen.h"
 
 using namespace std;
@@ -10,16 +9,16 @@ class Snake {
 public:
 	Snake();
 	~Snake();
-	void Reset(COORD start_pos);                   // "сброс" змеи
-	void Draw(Screen& scr);                        // первичная отрисовка змеи на экране
-	void Move(const COORD& delta, Screen& scr);   // передвижение змеи на приращение координат
-	void Grow(const COORD& pos, int growbits);     // увеличение длины змеи
-	bool IsInSnakeBody(const COORD& pos);                   // проверка попадания координаты в тело змеи
-	COORD GetSnakeHeadCoordinate();                                  // метод возвращает координаты головы змеи
-	int GetSnakeSize();                                     // метод возвращает длину змеи
+	void Reset(COORD start_pos);									// "reset" snake
+	void Draw(Screen& scr);											// initial drawing of a snake on the screen
+	void Move(const COORD& delta, Screen& scr, int mode_number);	// snake movement by increment of coordinates
+	void Grow(const COORD& pos, int growbits);						// increasing the length of the snake
+	bool IsInSnakeBody(const COORD& pos);							// checking if the coordinates hit the body of the snake
+	COORD GetSnakeHeadCoordinate();                                 // get snake head coordinates
+	int GetSnakeSize();												// get length of the snake
 
 private:
-	vector<COORD> m_worm;       // вектор координат сегментов тела змеи
-	string m_head_mark;         // символ, которым отрисовывается голова змеи
-	unsigned int m_drawn;     // длина отрисованного тела змеи
+	vector<COORD> m_worm;											// coordinate vector of snake body segments
+	string m_head_mark;												// symbol for the head of a snake
+	unsigned int m_drawn;											// length of the rendered body of the snake
 };

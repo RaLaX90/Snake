@@ -1,6 +1,21 @@
 #include "Screen.h"
 
-Screen::Screen() {
+// _width - playing field width (x)
+// _height - height of the playing field (y)
+Screen::Screen(int _width, int _height) {
+
+	if (_width == 0 && _height == 0) {
+		CONSOLE_SCREEN_BUFFER_INFO pcsbi;
+		GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &pcsbi);
+
+		width = pcsbi.dwMaximumWindowSize.X;
+		height = pcsbi.dwMaximumWindowSize.Y / 2 - 2;
+	}
+	else {
+		width = _width;
+		height = _height;
+	}
+
 	m_console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (m_console_handle == INVALID_HANDLE_VALUE) {
 		throw "Failed GetStdHandle(): INVALID_HANDLE_VALUE";
@@ -48,4 +63,14 @@ void Screen::PrintString(int position_x, int position_y, string text)
 
 void Screen::ClearScreen() {
 	system("cls");
+}
+
+int Screen::getWidth()
+{
+	return width;
+}
+
+int Screen::getHeight()
+{
+	return height;
 }

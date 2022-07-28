@@ -1,6 +1,6 @@
 #include "Snake.h"
 
-string SNAKE_TAIL = "@";        // символ для отрисовки сегментов тела змеи, кроме головы
+string SNAKE_TAIL = "@";        // symbol for drawing segments of the snake's body, except for the head
 
 Snake::Snake() {
 	m_head_mark = '<';
@@ -12,10 +12,10 @@ Snake::~Snake()
 
 void Snake::Reset(COORD start_pos) {
 	m_worm.clear();
-	m_worm.reserve(1000);         // зарезервировть память
-	m_worm.push_back(start_pos);  // добавить координаты головы
-	m_worm.push_back(start_pos);  // добавить координаты хвоста
-	m_worm[0].X++;                // координата x хвоста - на 1 правее
+	m_worm.reserve(1000);         // reserve memory
+	m_worm.push_back(start_pos);  // add head coordinates
+	m_worm.push_back(start_pos);  // add tail coordinates
+	m_worm[0].X++;                // x coordinate of the tail - 1 to the right
 }
 
 void Snake::Draw(Screen& scr) {
@@ -29,16 +29,16 @@ void Snake::Draw(Screen& scr) {
 	m_drawn = m_worm.size();
 }
 
-void Snake::Move(const COORD& delta, Screen& scr) {
-	// При перемещении змеи перерисовывается только положение головы (и первого сегмента)
-	// и положение хвоста. Остальные сегменты змеи не перерисовываются.
+void Snake::Move(const COORD& delta, Screen& scr, int mode_number) {
+	// When moving the snake, only the position of the head (and the first segment) is redrawn
+	// and tail position. The remaining segments of the snake are not redrawn.
 
-	// Перерисовка хвоста.
-	// Длина змеи увеличивается, когда змея растёт (метод grow()),
-	// но змея на экране не изменяется. Поэтому, если отрисованная длина змеи
-	// совпадает с реальной длиной, то на экране затирается последний сегмент змеи (хвост).
-	// В противном случае, хвост остаётся на месте, голова сдвигается на единицу,
-	// а отрисованная длина увеличивается.
+	// Redraw the tail.
+	// The length of the snake increases as the snake grows (grow() method),
+	// but the snake on the screen does not change. Therefore, if the rendered length of the snake
+	// coincides with the real length, then the last segment of the snake (tail) is overwritten on the screen.
+	// Otherwise, the tail remains in place, the head moves by one,
+	// and the rendered length is increased.
 	if (m_drawn == m_worm.size()) {
 		scr.PrintString(m_worm[0].X, m_worm[0].Y, " ");
 	}
@@ -46,15 +46,15 @@ void Snake::Move(const COORD& delta, Screen& scr) {
 		m_drawn++;
 	}
 
-	// сдвиг координат в векторе без отрисовки
+	// shift coordinates in the vector without drawing
 	for (unsigned int i = 1; i < m_worm.size(); i++) {
 		m_worm[i - 1] = m_worm[i];
 	}
 
-	m_worm[m_worm.size() - 1].X += delta.X;       // координата головы изменяется на приращение
-	m_worm[m_worm.size() - 1].Y += delta.Y;       // координата головы изменяется на приращение
+	m_worm[m_worm.size() - 1].X += delta.X;       // head coordinate is incremented
+	m_worm[m_worm.size() - 1].Y += delta.Y;       // head coordinate is incremented
 
-	// выбор символа для отрисовки головы в зависимости от направления движения
+	// select a symbol for drawing the head depending on the direction of movement
 	if (delta.X < 0) {
 		m_head_mark = '<';
 	}
@@ -68,9 +68,23 @@ void Snake::Move(const COORD& delta, Screen& scr) {
 		m_head_mark = 'V';
 	}
 
-	// Перерисовка головы и первого сегмента змеи.
-	scr.PrintString(m_worm[m_worm.size() - 1].X, m_worm[m_worm.size() - 1].Y, m_head_mark);
-	scr.PrintString(m_worm[m_worm.size() - 2].X, m_worm[m_worm.size() - 2].Y, SNAKE_TAIL);
+	// if you chose simple mode, then allow the snake to pass through the borders of the map
+	if (mode_number == 49) {
+		for (unsigned int i = 0; i < m_worm.size(); i++) {
+			if (m_worm[i].X == 0) {
+				m_worm[i].X = scr.getWidth() - 2;
+			}
+			else if (m_worm[i].X == scr.getWidth() - 1) {
+				m_worm[i].X = 1;
+			}
+			else if (m_worm[i].Y == 0) {
+				m_worm[i].Y = scr.getHeight() - 2;
+			}
+			else if (m_worm[i].Y == scr.getHeight() - 1) {
+				m_worm[i].Y = 1;
+			}
+		}
+	}
 }
 
 void Snake::Grow(const COORD& pos, int growbits) {
@@ -80,7 +94,7 @@ void Snake::Grow(const COORD& pos, int growbits) {
 }
 
 bool Snake::IsInSnakeBody(const COORD& pos) {
-	for (unsigned int i = 0; i < m_worm.size(); i++) {
+	for (unsigned int i = 0; i < m_worm.size() - 1; i++) {
 		if (m_worm[i].X == pos.X && m_worm[i].Y == pos.Y) {
 			return true;
 		}
