@@ -1,20 +1,9 @@
 #include "Screen.h"
 
-// _width - playing field width (x)
-// _height - height of the playing field (y)
-Screen::Screen(int _width, int _height) {
-
-	if (_width == 0 && _height == 0) {
-		CONSOLE_SCREEN_BUFFER_INFO pcsbi;
-		GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &pcsbi);
-
-		width = pcsbi.dwMaximumWindowSize.X;
-		height = pcsbi.dwMaximumWindowSize.Y / 2 - 2;
-	}
-	else {
-		width = _width;
-		height = _height;
-	}
+// _width - playing field m_width (x)
+// _height - m_height of the playing field (y)
+Screen::Screen(short _width, short _height) :
+	m_width(_width), m_height(_height) {
 
 	m_console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (m_console_handle == INVALID_HANDLE_VALUE) {
@@ -38,39 +27,38 @@ Screen::~Screen() {
 	SetConsoleTextAttribute(m_console_handle, m_old_text_attribute);
 }
 
-void Screen::SetCursorShow(bool visible) {
-	m_current_cursor_info.bVisible = visible;
+void Screen::SetCursorShow(bool _visible) {
+	m_current_cursor_info.bVisible = _visible;
 	if (!SetConsoleCursorInfo(m_console_handle, &m_current_cursor_info)) {
 		throw "Failed SetConsoleCursorInfo()";
 	}
 }
 
-void Screen::SetTextAttribute(WORD attr) {
-	SetConsoleTextAttribute(m_console_handle, attr);
+void Screen::SetTextAttribute(WORD _attr) {
+	SetConsoleTextAttribute(m_console_handle, _attr);
 }
 
-void Screen::SetCursorPosition(int position_x, int position_y)
+void Screen::SetCursorPosition(short _position_X, short _position_Y)
 {
-	COORD pos = { position_x, position_y };
-	SetConsoleCursorPosition(m_console_handle, pos);
+	SetConsoleCursorPosition(m_console_handle, COORD{ _position_X ,_position_Y });
 }
 
-void Screen::PrintString(int position_x, int position_y, string text)
+void Screen::PrintString(short _position_X, short _position_Y, string _text)
 {
-	SetCursorPosition(position_x, position_y);
-	cout << text;
+	SetCursorPosition(_position_X, _position_Y);
+	cout << _text;
 }
 
 void Screen::ClearScreen() {
 	system("cls");
 }
 
-int Screen::getWidth()
+short Screen::GetWidth()
 {
-	return width;
+	return m_width;
 }
 
-int Screen::getHeight()
+short Screen::GetHeight()
 {
-	return height;
+	return m_height;
 }

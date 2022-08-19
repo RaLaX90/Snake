@@ -16,7 +16,7 @@ int main()
 
 		game.PrintLogo();
 
-		game.WaitForClick(1, 18);
+		game.WaitForClick();
 
 		// display a suggestion for choosing a game mode, if the user has not chosen what we want - repeat the output
 		int ch = 0;

@@ -7,12 +7,12 @@ string food_symbol = "$";     // symbol for displaying food
 // Constructor
 // _scr - an object that outputs to the console
 // _latency - delay between position changes in milliseconds
-Game::Game(Screen& _scr, int _latency) :
+Game::Game(const Screen& _scr, uint8_t _latency) :
 	screen(_scr), latency(_latency) {
 
 	m_generator = mt19937(m_rd());
-	m_distribution_width = uniform_int_distribution<int>(1, screen.getWidth() - 2);
-	m_distribution_height = uniform_int_distribution<int>(1, screen.getHeight() - 2);
+	m_distribution_width = uniform_int_distribution<short>(1, screen.GetWidth() - 2);
+	m_distribution_height = uniform_int_distribution<short>(1, screen.GetHeight() - 2);
 
 	duration_game = 0;
 
@@ -25,14 +25,12 @@ Game::Game(Screen& _scr, int _latency) :
 }
 
 Game::Command Game::getCommand() {
-	int ch;
-
-	ch = _getch();
+	int ch = _getch();
 	if (ch == 0 || ch == 0xe0) {
 		ch = _getch();
 	}
 
-	for (int i = 0; i < 5; i++) {
+	for (uint8_t i = 0; i < 5; i++) {
 		if (cmd_table[i].first == ch) {
 			return cmd_table[i].second;
 		}
@@ -65,32 +63,32 @@ void Game::drawGameField(string symbol) {
 
 	screen.ClearScreen();
 
-	for (int i = 0; i < screen.getHeight(); i++) {
-		if (i == 0 || i == screen.getHeight() - 1) {
-			for (int j = 0; j < screen.getWidth(); j++) {
+	for (uint16_t i = 0; i < screen.GetHeight(); i++) {
+		if (i == 0 || i == screen.GetHeight() - 1) {
+			for (uint16_t j = 0; j < screen.GetWidth(); j++) {
 				screen.PrintString(j, i, symbol);
 			}
 		}
 		else {
 			screen.PrintString(0, i, symbol);
-			screen.PrintString(screen.getWidth() - 1, i, symbol);
+			screen.PrintString(screen.GetWidth() - 1, i, symbol);
 		}
 	}
 }
 
 void Game::printStatistics() {
-	screen.PrintString(0, screen.getHeight(), "Length: " + to_string(snake.GetSnakeSize()));
-	screen.PrintString(12, screen.getHeight(), "Game duration: " + to_string(duration_game));
+	screen.PrintString(0, screen.GetHeight(), "Length: " + to_string(snake.GetSnakeSize()));
+	screen.PrintString(12, screen.GetHeight(), "Game duration: " + to_string(duration_game));
 }
 
-void Game::WaitForClick(int position_x, int position_y) {
-	screen.PrintString(screen.getWidth() / 2, screen.getHeight() / 2, "Press any key for continue...");
+void Game::WaitForClick() {
+	screen.PrintString(screen.GetWidth() / 2, screen.GetHeight() / 2, "Press any key for continue...");
 	_getch();
 	clearkeys();
 }
 
 bool Game::IsOnceMore() {
-	screen.PrintString(screen.getWidth() / 2 - 8, 13, "O n c e    m o r e ?");
+	screen.PrintString(screen.GetWidth() / 2 - 8, 13, "O n c e    m o r e ?");
 
 	int ch = _getch();
 	clearkeys();
@@ -103,8 +101,8 @@ bool Game::IsOnceMore() {
 }
 
 void Game::PrintLogo() {
-	screen.PrintString(screen.getWidth() / 2 + 7, screen.getHeight() / 2 - 2, "S  N  A  K  E");
-	screen.PrintString(screen.getWidth() / 2 + 11, screen.getHeight() / 2 + 10, ver_number);
+	screen.PrintString(screen.GetWidth() / 2 + 7, screen.GetHeight() / 2 - 2, "S  N  A  K  E");
+	screen.PrintString(screen.GetWidth() / 2 + 11, screen.GetHeight() / 2 + 10, ver_number);
 }
 
 void Game::EndGame() {
@@ -112,23 +110,24 @@ void Game::EndGame() {
 	screen.PrintString(0, 0, "Snake " + ver_number);
 }
 
-void Game::StartGameLoop(int mode_number) {
+void Game::StartGameLoop(uint8_t mode_number) {
 
+	thread th([&]() { drawGameField("#"); });						// draw the playing field parallel
+	
 	duration_game = 0;
 
-	drawGameField("#");           // draw the playing field
-
-	COORD snake_start_position{ screen.getWidth() / 2, screen.getHeight() / 2 };
-	snake.Reset(snake_start_position);				// set snake: length 2,
-													// position - in the middle of the playing field,
-													// direction - left
-	snake.Draw(screen);                    // initial snake drawing
+	snake.Reset(screen.GetWidth() / 2, screen.GetHeight() / 2);		// set snake: length 2,
+																	// position - in the middle of the playing field,
+																	// direction - left
+	snake.Draw(screen);												// initial snake drawing
 
 	Command cmd = CMD_NOCOMMAND;
 	State state = STATE_OK;
 	// delta contains the coordinate increment (dx, dy) for each snake move across the field
 	COORD delta{ -1, 0 };                // initial movement - to the left
 	COORD food = createFood();          // calculate food coordinates
+
+	th.join();												// wait until the playing field is completed before drawing food 
 	screen.PrintString(food.X, food.Y, food_symbol);      // display food on the screen
 
 	printStatistics();                       // display the initial statistics of the game
@@ -182,7 +181,7 @@ void Game::StartGameLoop(int mode_number) {
 		COORD snake_head_coordinate = snake.GetSnakeHeadCoordinate();   // snake head coordinate
 
 		// if the snake's head collides with the field boundary or with the snake's body, then the snake dies
-		if (snake_head_coordinate.X == 0 || snake_head_coordinate.X == screen.getWidth() - 1 || snake_head_coordinate.Y == 0 || snake_head_coordinate.Y == screen.getHeight() - 1 || snake.IsInSnakeBody(snake_head_coordinate)) {
+		if (snake_head_coordinate.X == 0 || snake_head_coordinate.X == screen.GetWidth() - 1 || snake_head_coordinate.Y == 0 || snake_head_coordinate.Y == screen.GetHeight() - 1 || snake.IsInSnakeBody(snake_head_coordinate)) {
 			state = STATE_DIED;
 		}
 
@@ -206,7 +205,7 @@ void Game::StartGameLoop(int mode_number) {
 
 	} while (state == STATE_OK);          // play while the snake is alive
 
-	screen.PrintString(screen.getWidth() / 2 - 8, 10, " G a m e    o v e r ");
+	screen.PrintString(screen.GetWidth() / 2 - 8, 10, " G a m e    o v e r ");
 	clearkeys();
 	_getch();
 	clearkeys();
